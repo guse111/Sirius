@@ -1,52 +1,58 @@
-from moviepy.editor import VideoFileClip
+# video_summary_api.py
+from fastapi import FastAPI
+from pydantic import BaseModel
 from video_downloader import download_from_yandex_disk
+from moviepy.editor import VideoFileClip
 from vosk import Model, KaldiRecognizer, SetLogLevel
 from test_proxyAPI import AI
-from test_bert import retelling
-from transformers import pipeline
 from pydub import AudioSegment
 import json
 import os
 
+app = FastAPI()
 
-def transcribe_audio_from_video(video_url, model_path, video_path='video.mp4', audio_path='audio.wav'):
-    # Скачиваем видео
-    download_from_yandex_disk(video_url, video_path)
+class VideoURLRequest(BaseModel):
+    video_url: str
+
+@app.post("/transcribe/")
+async def transcribe_video(request: VideoURLRequest):
+    video_url = request.video_url
+    model_path = "models/vosk-model-small-ru-0.22"
+
+    video_path = 'video.mp4'
+    audio_path = 'audio.wav'
+
+    async def transcribe_audio_from_video(video_url, model_path, video_path='video.mp4', audio_path='audio.wav'):
+        # Асинхронная загрузка видео
+        await download_from_yandex_disk(video_url, video_path)
+
+        # Извлекаем аудио из видео
+        def extract_audio(video_path, audio_path):
+            video = VideoFileClip(video_path)
+            video.audio.write_audiofile(audio_path, codec='pcm_s16le')
+
+        extract_audio(video_path, audio_path)
+
+        # Настройки модели и распознавания
+        SetLogLevel(0)
+        FRAME_RATE = 16000
+        CHANNELS = 1
+
+        if not os.path.exists(model_path):
+            return {"error": "Model not found. Please download the model and unpack it."}
+
+        model = Model(model_path)
+        rec = KaldiRecognizer(model, FRAME_RATE)
+        rec.SetWords(True)
+
+        audio = AudioSegment.from_file(audio_path).set_channels(CHANNELS).set_frame_rate(FRAME_RATE)
+        rec.AcceptWaveform(audio.raw_data)
+        result = rec.Result()
+        text = json.loads(result)["text"]
+
+        return text
+
+    extracted_text = await transcribe_audio_from_video(video_url, model_path)
+    summary = await AI(extracted_text)
     
-    # Извлекаем аудио из видео
-    def extract_audio(video_path, audio_path):
-        video = VideoFileClip(video_path)
-        video.audio.write_audiofile(audio_path, codec='pcm_s16le')
-    
-    extract_audio(video_path, audio_path)
-    
-    # Настройки модели и распознавания
-    SetLogLevel(0)
-    FRAME_RATE = 16000
-    CHANNELS = 1
-
-    if not os.path.exists(model_path):
-        print("Please download the model from https://alphacephei.com/vosk/models and unpack it.")
-        return None
-
-    model = Model(model_path)
-    rec = KaldiRecognizer(model, FRAME_RATE)
-    rec.SetWords(True)
-
-    # Предобработка аудио и извлечение текста
-    audio = AudioSegment.from_file(audio_path).set_channels(CHANNELS).set_frame_rate(FRAME_RATE)
-    rec.AcceptWaveform(audio.raw_data)
-    result = rec.Result()
-    text = json.loads(result)["text"]
-
-    return text
-
-
-# Использование функции
-video_url = 'https://disk.yandex.ru/i/271ogJDCZFYZNw'
-model_path = "models/vosk-model-small-ru-0.22"
-text = transcribe_audio_from_video(video_url, model_path)
-print("Извлечённый текст:", text)
-summary = AI(text)
-print("proxyAPI:", summary)
-
+    return {"transcribed_text": extracted_text, "summary": summary}
