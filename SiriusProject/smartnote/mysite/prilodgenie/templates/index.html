@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smartnote</title>
+    <link rel="stylesheet" href="{% static 'prilodgenie/css/main.css' %}">
+</head>
+<body>
+    <div class="wrapper">
+        <header class="container">
+            <span class="logo">Smart note</span>
+            <nav>
+                <ul>
+                    <li class="active"><a href="#">Главная страница</a></li>
+                    <li><a href="#">Поддержка</a></li>
+                    <li><a href="#">Частые вопросы</a></li>
+                    <li><a href="#">Наши соц сети</a></li>
+                    <li><a href="#">Наши продукты</a></li>
+                    <li class="btn"><a href="#">Зарегистрироваться</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="hero container">
+            <div class="hero--info">
+                <h2>Smart note</h2>
+                <h1>Привет! Я интеллектуальный помощник для создания учебных конспектов. Отправь мне свои материалы для создания первого конспекта!</h1>
+                <button class="btn">Перетащите сюда свои файлы</button>
+            </div>
+            <img src="{% static 'prilodgenie/img/Group 22.svg' %}" alt="">
+            <img src="{% static 'prilodgenie/img2/Group 15.svg' %}" alt="">
+        </div>
+    </div>
+</body>
+</html>

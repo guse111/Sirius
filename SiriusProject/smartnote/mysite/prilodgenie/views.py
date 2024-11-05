@@ -7,7 +7,7 @@ from .forms import RegistrationForm, LoginForm
 
 
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'index.html')
 
 
 def register_view(request):
