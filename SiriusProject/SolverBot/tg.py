@@ -339,7 +339,7 @@ def AI(subject, tema, numklass, kq):
 
     completion = client.chat.completions.create(
         model="gpt-4o",
-        temperature=0.2,
+        temperature=0.3,
         messages=[{"role": "system", "content": sistpromt}, {"role": "user", "content": userpromt}]
     )
     text = completion.choices[0].message.content
